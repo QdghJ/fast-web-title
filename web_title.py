@@ -16,9 +16,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 class WebTitle:
 
-    def __init__(self, urls, thread_count=20):
+    def __init__(self, urls, coroutine_count=20):
         self.urls = urls
-        self.thread_count = thread_count
+        self.coroutine_count = coroutine_count
         self.result = {}
 
     def init_queue(self):
@@ -36,9 +36,9 @@ class WebTitle:
             title = title.strip()
         return title
 
-    async def get_title(self):
+    async def get_title(self, queue):
         while True:
-            url = await self.queue.get()
+            url = await queue.get()
             print('get title for {}'.format(url))
             try:
                 async with aiohttp.ClientSession() as session:
@@ -49,16 +49,16 @@ class WebTitle:
                 self.result[url] = title
             except Exception as e:
                 print('{} has error: {} '.format(url,str(e)))                
-            self.queue.task_done()
+            queue.task_done()
 
     async def start_task(self):
-        self.queue = self.init_queue()
+        queue = self.init_queue()
         tasks = []
-        for i in range(self.thread_count):
-            task = asyncio.create_task(self.get_title())
+        for i in range(self.coroutine_count):
+            task = asyncio.create_task(self.get_title(queue))
             tasks.append(task)
 
-        await self.queue.join()
+        await queue.join()
 
         for task in tasks:
             task.cancel()
@@ -84,7 +84,7 @@ def parse_args():
     parser.add_argument('-d','--domain', metavar='domain.txt', dest='domain_file', type=str, help=u'domain to get title')
     parser.add_argument('-u','--url', metavar='url.txt', dest='url_file', type=str, help=u'urls to get title')
     parser.add_argument('-i','--ip', metavar='ip.txt', dest='ip_file', type=str, help=u'ips to get title')
-    parser.add_argument('-t','--thread', metavar='20', dest='thread_count', type=int, default=20,help=u'threads to get title')
+    parser.add_argument('-t','--coroutine', metavar='20', dest='coroutine_count', type=int, default=20,help=u'coroutines to get title')
     parser.add_argument('-o','--outfile', metavar='result.txt', dest='outfile', type=str, default='result.csv',help=u'file to result')
     args = parser.parse_args()
     if args.url_file == None and args.domain_file == None and args.ip_file == None:
@@ -126,7 +126,7 @@ def main():
                         urls.append('http://' + str(i))
                         urls.append('https://' + str(i))
 
-        web_title = WebTitle(urls, args.thread_count)
+        web_title = WebTitle(urls, args.coroutine_count)
         web_title.start()
         web_title.write_result(args.outfile)
     except Exception as e:

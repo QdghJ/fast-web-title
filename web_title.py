@@ -55,7 +55,9 @@ class WebTitle:
         queue = self.init_queue()
         tasks = []
         for i in range(self.coroutine_count):
-            task = asyncio.create_task(self.get_title(queue))
+            # task = asyncio.create_task(self.get_title(queue))
+            # create_task is not support in < python 3.7, use ensure_future respace
+            task = asyncio.ensure_future(self.get_title(queue))
             tasks.append(task)
 
         await queue.join()
@@ -121,7 +123,8 @@ def main():
             for ip in ips:
                 ip = ip.strip()
                 if ip != '':
-                    cidr_ip = IPy.IP(ip)
+                    # cidr_ip = IPy.IP(ip)
+                    cidr_ip = IPy.IP(ip, make_net=1)
                     for i in cidr_ip:
                         urls.append('http://' + str(i))
                         urls.append('https://' + str(i))

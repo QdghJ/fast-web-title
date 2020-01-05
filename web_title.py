@@ -17,7 +17,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 class WebTitle:
 
     def __init__(self, urls, coroutine_count=20):
-        self.urls = urls
+        self.urls = list(set(urls))
         self.coroutine_count = coroutine_count
         self.result = {}
 

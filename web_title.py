@@ -70,14 +70,19 @@ class WebTitle:
         asyncio.run(self.start_task())
 
     def write_result(self, outfile):
+        urls = self.result.keys()
         with open(outfile, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['url','title'])
-            urls = self.result.keys()
             for url in urls:
                 title = self.result[url]
                 writer.writerow([url, title])
-        print('result write to {}'.format(outfile))
+        with open(outfile + '_alive.txt', 'w') as f:
+            for url in urls:
+                f.write(url + '\n')
+        
+        print('alive urls write to {}'.format(outfile + '_alive.txt'))
+        print('title write to {}'.format(outfile))
 
 def parse_args():
     parser = argparse.ArgumentParser(description='A tool that can get title for domains or urls')
